@@ -1,0 +1,12 @@
+services:
+  app:
+    build: .
+    container_name: my-nodejs-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - .:/nodejs
+      - /nodejs/node_modules
+    restart: unless-stopped
