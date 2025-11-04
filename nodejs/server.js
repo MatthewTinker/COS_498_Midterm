@@ -1,6 +1,11 @@
 const express = require('express');
 const app = express();
+const hbs = require('hbs');
 const PORT = process.env.PORT || 3000;
+
+// Set up Handlebars
+app.set('view engine', 'hbs');
+app.set('views', path.join(__dirname, 'views'));
 
 // Middleware
 app.use(express.json());
@@ -25,6 +30,9 @@ app.get('/health', (req, res) => {
         status: 'healthy',
         service: 'nodejs-backend'
     });
+});
+
+app.get('/home', (req, res) => {
 });
 
 app.get('/register', (req, res) => {
