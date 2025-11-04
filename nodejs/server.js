@@ -1,7 +1,7 @@
 const express = require('express');
 const app = express();
 const hbs = require('hbs');
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 // Set up Handlebars
 app.set('view engine', 'hbs');
@@ -22,13 +22,6 @@ app.get('/', (req, res) => {
     res.json({ 
         message: 'Hello from the API!',
         timestamp: new Date().toISOString()
-    });
-});
-
-app.get('/health', (req, res) => {
-    res.json({ 
-        status: 'healthy',
-        service: 'nodejs-backend'
     });
 });
 
