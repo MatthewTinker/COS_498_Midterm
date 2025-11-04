@@ -1,15 +1,32 @@
-body {
-  font-family: Arial, sans-serif;
-  margin: 20px;
-  background-color:rgb(110, 112, 231);
+ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  background-color: #485779;
+  display: flex;
+  width: 500;
+  justify-content: center;
 }
 
 h1 {
-  color: #333;
+    border: 2px solid #f7f9f9;
+    border: 5px;
 }
 
-.container {
-  background-color: white;
-  padding: 20px;
+body {
+    background-color: #5f95c7;
+    margin: 0;
+    padding: 0;
 }
-~
+
+ul li a {
+  align-content: center;
+  display: block;
+  color: white;
+  padding: 14px 16px;
+  text-decoration: none;
+}
+
+ul li a:hover {
+  background-color: #78cad2;
+}
