@@ -9,8 +9,9 @@ ul {
 }
 
 h1 {
-    border: 2px solid #f7f9f9;
-    border: 5px;
+  justify-content: center;
+  border: 2px solid #f7f9f9;
+  border: 5px;
 }
 
 body {
