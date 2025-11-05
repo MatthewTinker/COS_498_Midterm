@@ -1,7 +1,13 @@
 const express = require('express');
 const app = express();
 const hbs = require('hbs');
+const cookieParser = require('cookie-parser')
 const PORT = process.env.PORT || 3001;
+
+//Store data
+const users = {}; //{ username: string, password: string }
+const sessions = {}; //{ author: string, text: string, createdAt: Date }
+const comments = []; //{ user: string, sessionId: string, expires: Date }
 
 // Set up Handlebars
 app.set('view engine', 'hbs');
@@ -26,18 +32,23 @@ app.get('/', (req, res) => {
 });
 
 app.get('/home', (req, res) => {
+    res.render('home');
 });
 
 app.get('/register', (req, res) => {
+    res.render('register');
 });
 
 app.get('/login', (req, res) => {
+    res.render('login');
 });
 
 app.get('/comments', (req, res) => {
+    res.render('comments');
 });
 
 app.get('/comments/new', (req, res) => {
+    res.render('new');
 });
 
 
