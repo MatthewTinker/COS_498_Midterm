@@ -17,6 +17,7 @@ hbs.registerPartials(path.join(__dirname, 'views', 'partials'));
 
 // Middleware
 app.use(express.json());
+app.use(express.static('public'))
 app.use(express.urlencoded({ extended: true }));
 
 // Remove static file serving - nginx will handle this
