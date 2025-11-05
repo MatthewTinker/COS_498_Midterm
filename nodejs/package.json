@@ -13,8 +13,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.19.2",
-    "hbs": "^4.2.0",
-    "cookie-parser": "^1.4.6"
+      "cookie-parser": "^1.4.7",
+      "express": "^5.1.0",
+      "hbs": "^4.2.0"
   }
 }
