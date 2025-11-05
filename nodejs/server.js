@@ -90,6 +90,18 @@ app.get('/comments/new', (req, res) => {
     res.render('new', { title: "Home", user: req.user || null, year: new Date().getFullYear() });
 });
 
+app.get('/logout', (req, res) => {
+    const sessionId = req.cookies.sessionId;
+
+    if (sessionId) {
+        delete sessions[sessionId]
+    }
+
+    res.clearCookie("sessionId")
+    res.redirect("/")
+
+})
+
 
 
 //App Post Requests
@@ -122,18 +134,6 @@ app.post('/login', (req, res) => {
     res.cookie('sessionId', sessionId);
 
     res.redirect('/comments')
-
-})
-
-app.post('/logout', (req, res) => {
-    const sessionId = req.cookies.sessionId;
-
-    if (sessionId) {
-        delete sessions[sessionId]
-    }
-
-    res.clearCookie("sessionId")
-    res.redirect("/")
 
 })
 
