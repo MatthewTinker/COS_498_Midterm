@@ -9,7 +9,7 @@ ul {
 }
 
 h1 {
-  justify-content: center;
+  text-align: center;
   border: 2px solid #f7f9f9;
   border: 5px;
 }
@@ -30,4 +30,8 @@ ul li a {
 
 ul li a:hover {
   background-color: #78cad2;
+}
+
+footer {
+  text-align: center;
 }
