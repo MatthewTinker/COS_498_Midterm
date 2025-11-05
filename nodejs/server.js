@@ -83,7 +83,8 @@ app.get('/login', (req, res) => {
 });
 
 app.get('/comments', (req, res) => {
-    res.render('comments', { title: "Home", user: req.user || null, year: new Date().getFullYear() });
+    res.render('comments', { title: "Home", user: req.user || null, year: new Date().getFullYear(),
+    comments: comments });
 });
 
 app.get('/comments/new', (req, res) => {
@@ -140,24 +141,24 @@ app.post('/login', (req, res) => {
 
 })
 
-app.post('/comment', (req, res) => {
+// app.post('/comment', (req, res) => {
     
-    const text = req.body.text;
-    const author = req.user;
+//     const text = req.body.text;
+//     const author = req.user;
 
-    if (!author) {
-        return res.redirect('/login');
-    }
+//     if (!author) {
+//         return res.redirect('/login');
+//     }
 
-    comments.push({
-        author: author,
-        text: text,
-        createdAt: new Date()
-    });
+//     comments.push({
+//         author: author,
+//         text: text,
+//         createdAt: new Date()
+//     });
     
-    res.redirect('/comments');
+//     res.redirect('/comments');
 
-})
+// })
 
 
 
