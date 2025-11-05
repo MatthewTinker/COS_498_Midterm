@@ -11,7 +11,16 @@
 <body>
     {{> nav}}
 
-    <h1>Forum</h1>
+    <h1>Jeff the Landshark Main's Forum</h1>>
+
+    <form action="/comments" method="POST">
+        <label for="text">Your Comment:</label>
+        <textarea id="text" name="text" rows="5" required></textarea>
+
+        <button type="submit">Post Comment</button>
+    </form>
+
+    <p><a href="/comments">Back to Comments</a></p>
 
     {{> footer}}
 </body>

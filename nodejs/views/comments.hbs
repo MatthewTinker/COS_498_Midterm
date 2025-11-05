@@ -11,7 +11,26 @@
 <body>
     {{> nav}}
 
-    <h1>Forum</h1>
+    <h1>Jeff the Landshark Main's Forum</h1>
+   
+    {{#if user}}
+        <p><a href="/comments/new">Post a New Comment</a></p>
+    {{else}}
+        <p><a href="/login">Log in to post a comment</a></p>
+    {{/if}}
+
+    {{#if comments.length}}
+        <ul class="comment-list">
+            {{#each comments}}
+                <li class="comment">
+                    <strong>{{this.author}}</strong> <em>({{formatDate this.createdAt}})</em>
+                    <p>{{this.text}}</p>
+                </li>
+            {{/each}}
+        </ul>
+    {{else}}
+        <p>No comments yet. Be the first to post!</p>
+    {{/if}}
 
     {{> footer}}
 </body>

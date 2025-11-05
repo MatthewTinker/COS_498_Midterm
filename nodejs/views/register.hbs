@@ -10,7 +10,26 @@
 <body>
     {{> nav}}
 
-    <h1>Forum</h1>
+    <h1>Jeff the Landshark Main's Forum</h1>
+
+    {{#if error}}
+        <div class="error-message" role="alert">
+            {{error}}
+        </div>
+    {{/if}}
+
+    <form action="/register" method="POST">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required>
+
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+
+        <button type="submit">Register</button>
+    </form>
+
+    <p>Already have an account? <a href="/login">Login here</a></p>
+
 
     {{> footer}}
 </body>

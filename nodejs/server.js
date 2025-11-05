@@ -96,9 +96,11 @@ app.get('/comments/new', (req, res) => {
 app.post('/register', (req, res) => {
     const {username, password} = req.body;
 
-    // if (users[username]){
-    //     //throw some error
-    // }
+    if (users[username]) {
+        return res.render('register', {
+            error: "Username already taken"
+        })
+    }
 
     const sessionId = createSession(username);
     users[username] = {username, password}
@@ -110,7 +112,11 @@ app.post('/register', (req, res) => {
 
 app.post('/login', (req, res) => {
 
-    //Add login error
+    if (!users[username] || users[username].password != password) {
+        return res.render('login', {
+            error: "Invalid username or password"
+        });
+    }
 
     const sessionId = createSession(username);
     res.cookie('sessionId', sessionId);
