@@ -13,6 +13,7 @@ const comments = []; //{ user: string, sessionId: string, expires: Date }
 // Set up Handlebars
 app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, 'views'));
+hbs.registerPartials(path.join(__dirname, 'views', 'partials'));
 
 // Middleware
 app.use(express.json());
