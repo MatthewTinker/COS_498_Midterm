@@ -16,6 +16,7 @@ app.set('views', path.join(__dirname, 'views'));
 hbs.registerPartials(path.join(__dirname, 'views', 'partials'));
 
 // Middleware
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.static('public'))
 app.use(express.urlencoded({ extended: true }));
@@ -50,7 +51,9 @@ app.use((req, _res, next) => {
 let sessionCounter = 0;
 
 function createSession(username) {
+
     const sessionId = sessionCounter.toString();
+
     sessions[sessionId] = {
         user: username,
         sessionId: sessionId,
@@ -62,20 +65,11 @@ function createSession(username) {
 }
 
 
-// API Routes
-// Note: We don't include '/api' in our routes because nginx strips it when forwarding
-// nginx receives: http://localhost/api/users
-// nginx forwards to: http://backend-nodejs:3000/users (without /api)
+//App Get requests
 app.get('/', (req, res) => {
-    res.json({ 
-        message: 'Hello from the API!',
-        timestamp: new Date().toISOString()
-    });
+    res.render('home', { title: "Home", user: req.user || null, year: new Date().getFullYear() });
 });
 
-
-
-//App Get requests
 app.get('/home', (req, res) => {
     res.render('home', { title: "Home", user: req.user || null, year: new Date().getFullYear() });
 });
