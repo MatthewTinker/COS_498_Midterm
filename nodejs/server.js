@@ -141,24 +141,22 @@ app.post('/login', (req, res) => {
 
 })
 
-// app.post('/comment', (req, res) => {
-    
-//     const text = req.body.text;
-//     const author = req.user;
 
-//     if (!author) {
-//         return res.redirect('/login');
-//     }
-
-//     comments.push({
-//         author: author,
-//         text: text,
-//         createdAt: new Date()
-//     });
-    
-//     res.redirect('/comments');
-
-// })
+app.post('/comments', (req, res) => {
+    if (!req.user) {
+        return res.redirect('/login');
+    }
+    const { text } = req.body;
+    if (!text) {
+        return res.redirect('/comments/new');
+    }
+    comments.push({
+        author: req.user,
+        text: text,
+        createdAt: new Date()
+    });
+    res.redirect('/comments');
+})
 
 
 
