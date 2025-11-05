@@ -106,6 +106,7 @@ app.get('/logout', (req, res) => {
 
 //App Post Requests
 app.post('/register', (req, res) => {
+    
     const {username, password} = req.body;
 
     if (users[username]) {
@@ -123,6 +124,8 @@ app.post('/register', (req, res) => {
 })
 
 app.post('/login', (req, res) => {
+
+    const { username, password } = req.body;
 
     if (!users[username] || users[username].password != password) {
         return res.render('login', {
