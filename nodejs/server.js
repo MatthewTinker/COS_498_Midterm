@@ -126,6 +126,7 @@ app.post('/login', (req, res) => {
 })
 
 app.post('/logout', (req, res) => {
+    const sessionId = req.cookies.sessionId;
 
     if (sessionId) {
         delete sessions[sessionId]
