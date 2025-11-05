@@ -106,7 +106,7 @@ app.get('/logout', (req, res) => {
 
 //App Post Requests
 app.post('/register', (req, res) => {
-    
+
     const {username, password} = req.body;
 
     if (users[username]) {
