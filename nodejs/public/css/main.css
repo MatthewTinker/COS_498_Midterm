@@ -43,3 +43,21 @@ ul li a:hover {
 footer {
   text-align: center;
 }
+
+ul.comment-list {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  background-color: #485779;
+  /* Make items stack vertically */
+  display: flex;
+  flex-direction: column;  /* This makes the list vertical */
+  width: 500px;            /* add units for width */
+  justify-content: flex-start; /* align items at top */
+}
+
+ul.comment-list li.comment {
+  color: white;
+  padding: 10px;
+  border-bottom: 1px solid #f7f9f9;
+}
