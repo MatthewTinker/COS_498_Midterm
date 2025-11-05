@@ -3,7 +3,7 @@ const app = express();
 const hbs = require('hbs');
 const cookieParser = require('cookie-parser')
 const path = require('path');
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 //Store data
 const users = {}; //{ username: string, password: string }
