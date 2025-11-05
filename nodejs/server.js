@@ -102,21 +102,56 @@ app.get('/comments/new', (req, res) => {
 app.post('/register', (req, res) => {
     const {username, password} = req.body;
 
-    if (users[username]){
-    
-    }
+    // if (users[username]){
+    //     //throw some error
+    // }
+
+    const sessionId = createSession(username);
+    users[username] = {username, password}
+
+    res.cookie('sessionId', sessionId)
+    res.redirect('/comments')
 
 })
 
 app.post('/login', (req, res) => {
 
+    //Add login error
+
+    const sessionId = createSession(username);
+    res.cookie('sessionId', sessionId);
+
+    res.redirect('/comments')
+
 })
 
 app.post('/logout', (req, res) => {
 
+    if (sessionId) {
+        delete sessions[sessionId]
+    }
+
+    res.clearCookie("sessionId")
+    res.redirect("/")
+
 })
 
 app.post('/comments', (req, res) => {
+    
+    const text = req.body.text;
+    const author = req.user;
+
+    if (!author) {
+        return res.redirect('/login');
+    }
+
+    comments.push({
+        author: author,
+        text: text,
+        createdAt: new Date()
+    });
+    
+    res.redirect('/comments');
 
 })
 
