@@ -140,7 +140,7 @@ app.post('/login', (req, res) => {
 
 })
 
-app.post('/comments', (req, res) => {
+app.post('/comment', (req, res) => {
     
     const text = req.body.text;
     const author = req.user;
