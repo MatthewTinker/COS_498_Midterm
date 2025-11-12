@@ -21,6 +21,7 @@ app.use(express.json());
 app.use(express.static('public'))
 app.use(express.urlencoded({ extended: true }));
 
+//Helper to registration
 hbs.registerHelper('formatDate', function(date) {
     return date.toLocaleString('en-US', {
         month: 'short',
@@ -50,6 +51,7 @@ app.use((req, _res, next) => {
 
 let sessionCounter = 0;
 
+//Creates session
 function createSession(username) {
 
     const sessionId = sessionCounter.toString();
@@ -65,7 +67,7 @@ function createSession(username) {
 }
 
 
-//App Get requests
+//App Get requests, almost all follow the same format
 app.get('/', (req, res) => {
     res.render('home', { title: "Home", user: req.user || null, year: new Date().getFullYear() });
 });
@@ -91,6 +93,8 @@ app.get('/comments/new', (req, res) => {
     res.render('new', { title: "Home", user: req.user || null, year: new Date().getFullYear() });
 });
 
+//Logout is unique
+//Deletes the session
 app.get('/logout', (req, res) => {
     const sessionId = req.cookies.sessionId;
 
@@ -106,6 +110,8 @@ app.get('/logout', (req, res) => {
 
 
 //App Post Requests
+
+//Register page, stores the username and password provided it is valid
 app.post('/register', (req, res) => {
 
     const {username, password} = req.body;
@@ -124,6 +130,7 @@ app.post('/register', (req, res) => {
 
 })
 
+//Logs a user in provided it is valid (correct credentials)
 app.post('/login', (req, res) => {
 
     const { username, password } = req.body;
@@ -141,7 +148,7 @@ app.post('/login', (req, res) => {
 
 })
 
-
+//Shows a list of the comments
 app.post('/comments', (req, res) => {
     if (!req.user) {
         return res.redirect('/login');

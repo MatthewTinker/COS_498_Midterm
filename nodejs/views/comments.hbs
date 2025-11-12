@@ -13,12 +13,21 @@
 
     <h1>Jeff the Landshark Main's Forum</h1>
    
+
+   <!--
+    If statement to control whether prompt to log in or prompt to comment
+   -->
     {{#if user}}
         <p><a href="/comments/new">Post a New Comment</a></p>
     {{else}}
         <p><a href="/login">Log in to post a comment</a></p>
     {{/if}}
 
+
+    <!--
+    Actually creates the displayed chunk of comments. For each comment, creates a post with the
+    author, author details, and the comment itself.
+    -->
     {{#if comments.length}}
         <ul class="comment-list">
             {{#each comments}}

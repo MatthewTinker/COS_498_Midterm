@@ -13,12 +13,20 @@
 
     <h1>Jeff the Landshark Main's Forum</h1>
 
+    <!--
+        Error message if the server.js raises an error flag
+    -->
     {{#if error}}
         <div class="error-message" role="alert">
             {{error}}
         </div>
     {{/if}}
 
+
+    <!--
+        A form used to log in. If the username and password exist and both match, allows the user 
+        to log in.
+    -->
     <form action="/login" method="POST">
         <label for="username">Username:</label>
         <input type="text" id="username" name="username" required>

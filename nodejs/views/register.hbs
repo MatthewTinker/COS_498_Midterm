@@ -12,12 +12,20 @@
 
     <h1>Jeff the Landshark Main's Forum</h1>
 
+    <!--
+        If an error flag is raised, trigger error message.
+    -->
     {{#if error}}
         <div class="error-message" role="alert">
             {{error}}
         </div>
     {{/if}}
 
+
+    <!--
+        Prompts user for username and password to register. NOTE: if the username already exists,
+        this will cause an error!
+    -->
     <form action="/register" method="POST">
         <label for="username">Username:</label>
         <input type="text" id="username" name="username" required>
