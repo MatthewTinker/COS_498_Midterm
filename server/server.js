@@ -1,15 +1,11 @@
 const express = require('express');
 const app = express();
 const hbs = require('hbs');
-const db = require('./database');
 const cookieParser = require('cookie-parser')
 const path = require('path');
 const PORT = process.env.PORT || 3000;
+const db = require("./scripts/database.js");
 
-//Store data
-const users = {}; //{ username: string, password: string }
-const sessions = {}; //{ author: string, text: string, createdAt: Date }
-const comments = []; //{ user: string, sessionId: string, expires: Date }
 
 // Set up Handlebars
 app.set('view engine', 'hbs');
@@ -78,6 +74,14 @@ function createSession(username, callback) {
     });
 }
 
+// Log login attempt
+function logLoginAttempt(username, ip, lockStatus, callback) {
+    db.run(
+        'INSERT INTO login (username, IP, lock_status) VALUES (?, ?, ?)',
+        [username, ip, lockStatus],
+        callback
+    );
+}
 
 //App Get requests, almost all follow the same format
 app.get('/', (req, res) => {
@@ -97,8 +101,30 @@ app.get('/login', (req, res) => {
 });
 
 app.get('/comments', (req, res) => {
-    res.render('comments', { title: "Home", user: req.user || null, year: new Date().getFullYear(),
-    comments: comments });
+    db.all(
+        'SELECT author, body, timestamps FROM comments ORDER BY timestamps DESC',
+        [],
+        (err, rows) => {
+            if (err) {
+                console.error('Error fetching comments:', err);
+                rows = [];
+            }
+            
+            // Transform database results to match template expectations
+            const formattedComments = rows.map(c => ({
+                author: c.author,
+                text: c.body,
+                createdAt: c.timestamps
+            }));
+
+            res.render('comments', { 
+                title: "Comments", 
+                user: req.user || null, 
+                year: new Date().getFullYear(),
+                comments: formattedComments
+            });
+        }
+    );
 });
 
 app.get('/comments/new', (req, res) => {
