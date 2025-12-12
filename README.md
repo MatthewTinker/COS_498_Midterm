@@ -8,8 +8,17 @@ Web forum dedicated to the discussion of everyone's favorite landshark.
 ## Overview
 This is a website source code designed to be used as a simple forum for discussion about Marvel Character, Jeff the Landshark. It contains basic security features, and is deliberately more secure. Additonally, there is support for live chat, as well as profile/user customization. 
 
+
 ## Features
-- Secure website using ssl
+### Database Schema
+Explanation
+
+### Environment Variables
+Explanation
+
+### Security Features
+- Secured using SSL certificates from let's encrypt
+- Passwords (UPDATE WHEN WORKING ON THIS FEATURE)
 
 ### IN PROGRESS
 - Database
@@ -26,9 +35,12 @@ This is a website source code designed to be used as a simple forum for discussi
 
 ## Instructions
 
+### Github
 - Clone the repository to your server of choice
 - Run the following: docker compose build 
 - Then run: docker compose up -d
+
+### NGINX Proxy Server
 - Connect to the ip of the server and open the nginx proxy admin panel
 - Set up the server as you wish: if you wish to use ssl certificates, set that up. Same with domain names. If you do choose to use one, ensure you have configured the domain name to actually use the server (adding it to the list of nameservers)
 - When you are ready to close it, run docker compose down
