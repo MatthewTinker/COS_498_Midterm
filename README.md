@@ -20,12 +20,14 @@ Explanation
 - Secured using SSL certificates from let's encrypt
 - Passwords (UPDATE WHEN WORKING ON THIS FEATURE)
 
+### Database
+Explain the schema
+
 ### IN PROGRESS
-- Database
+- Secure passwords using Hashing
 
 ### TO DO
 - Account system, with customization
-- Secure passwords using Hashing
 - Password recovery
 - Lockout system
 - Real-time chat
