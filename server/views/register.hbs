@@ -14,6 +14,7 @@
 
     <!--
         If an error flag is raised, trigger error message.
+        Typically will relate to an account already existing, or password failing pre-requisites
     -->
     {{#if error}}
         <div class="error-message" role="alert">
@@ -27,9 +28,14 @@
         this will cause an error!
     -->
     <form action="/register" method="POST">
+    
         <label for="username">Username:</label>
         <input type="text" id="username" name="username" required>
 
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required>
+
+        <p>The password must be a minimum of 8 characters long, contain at least one uppercase letter, lowercase letter, special character(!@#$%^&*(),.?":{}|<>), and number</p>
         <label for="password">Password:</label>
         <input type="password" id="password" name="password" required>
 
