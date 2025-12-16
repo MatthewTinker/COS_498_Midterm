@@ -5,6 +5,7 @@
 //Forces users to create stronger passwords
 //Locks accounts if the user fails to enter the correct password after multiple attempts (set to 5 by default, this is adjustable)
 
+
 const express = require('express');
 const router = express.Router();
 const { validatePassword, hashPassword, comparePassword } = require('../modules/password-utils');
@@ -141,7 +142,11 @@ function unlockAccount(db, username) {
 }
 
 // Export a function that takes the db instance
+const passwordUtils = require('../modules/password-utils');
+
 module.exports = function(db) {
+
+    
     // Register POST route
     router.post('/register', async (req, res) => {
         const { username, password, email, display_name } = req.body;
