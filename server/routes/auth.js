@@ -1,12 +1,20 @@
+//Stores the routes for creating a user session, the login page, and password validation/hashing
+
+//This script is absolutely vital: 
+//Keeps passwords secure and safe
+//Forces users to create stronger passwords
+
 const express = require('express');
 const router = express.Router();
 const { validatePassword, hashPassword, comparePassword } = require('../modules/password-utils');
 
 // Configuration constants
+// sed for account lockouts
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MINUTES = 15;
 
-// Helper function for logging
+
+// Helper function for logging (you'll need to pass db to this router)
 function logLoginAttempt(db, username, ip, lockStatus, callback) {
     db.run(
         'INSERT INTO login (username, IP, lock_status) VALUES (?, ?, ?)',
@@ -42,6 +50,9 @@ function createSession(db, username, callback) {
 function checkAccountLockout(db, username, callback) {
     const lockoutTimeMinutes = LOCKOUT_DURATION_MINUTES;
     const maxAttempts = MAX_LOGIN_ATTEMPTS;
+
+    console.log(`=== Checking lockout for: ${username} ===`);
+    console.log(`Max attempts: ${maxAttempts}, Lockout duration: ${lockoutTimeMinutes} mins`);
     
     // Get failed login attempts in the last lockout duration
     db.all(
@@ -193,7 +204,7 @@ module.exports = function(db) {
                     // Insert new user
                     db.run(
                         'INSERT INTO users (username, pass, email, display_name, account_lock) VALUES (?, ?, ?, ?, ?)',
-                        [username, hashedPassword, email, display_name, 0],
+                        [username, hashedPassword, email, display_name || username, 0],
                         function(err) {
                             if (err) {
                                 return res.render('register', {
@@ -202,7 +213,7 @@ module.exports = function(db) {
                                 });
                             }
 
-                            // Log the successful registration
+                            // Log the registration
                             logLoginAttempt(db, username, req.ip, 0, () => {});
 
                             // Create session
@@ -230,6 +241,8 @@ module.exports = function(db) {
     // Login POST route with account lockout
     router.post('/login', async (req, res) => {
         const { username, password } = req.body;
+
+        console.log(`\n>>> Login attempt - Username: ${username}, IP: ${req.ip}`);
 
         // First check if account is locked due to failed attempts
         checkAccountLockout(db, username, (err, lockoutStatus) => {

@@ -50,38 +50,9 @@ app.use((req, res, next) => {
     }
 });
 
-// Creates session
-function createSession(username, callback) {
-    // Use an integer session ID counter
-    db.get('SELECT MAX(session_id) as maxId FROM sessions', [], (err, row) => {
-        if (err) {
-            return callback(err, null);
-        }
-        
-        const sessionId = (row.maxId || 0) + 1;
-
-        db.run(
-            'INSERT INTO sessions (session_id, username) VALUES (?, ?)',
-            [sessionId, username],
-            (err) => {
-                if (err) {
-                    callback(err, null);
-                } else {
-                    callback(null, sessionId.toString());
-                }
-            }
-        );
-    });
-}
-
-// Log login attempt
-function logLoginAttempt(username, ip, lockStatus, callback) {
-    db.run(
-        'INSERT INTO login (username, IP, lock_status) VALUES (?, ?, ?)',
-        [username, ip, lockStatus],
-        callback
-    );
-}
+// Import and use auth routes
+const authRoutes = require('./routes/auth');
+app.use('/', authRoutes(db));
 
 //App Get requests, almost all follow the same format
 app.get('/', (req, res) => {
@@ -100,6 +71,8 @@ app.get('/login', (req, res) => {
     res.render('login', { title: "Home", user: req.user || null, year: new Date().getFullYear() });
 });
 
+//Render comments
+//Note, things are special
 app.get('/comments', (req, res) => {
     db.all(
         'SELECT author, body, timestamps FROM comments ORDER BY timestamps DESC',
@@ -130,6 +103,7 @@ app.get('/comments', (req, res) => {
 app.get('/comments/new', (req, res) => {
     res.render('new', { title: "Home", user: req.user || null, year: new Date().getFullYear() });
 });
+
 // Logout
 app.get('/logout', (req, res) => {
     const sessionId = req.cookies.sessionId;
@@ -140,103 +114,6 @@ app.get('/logout', (req, res) => {
 
     res.clearCookie("sessionId");
     res.redirect("/");
-});
-
-// App Post Requests
-
-// Register page
-app.post('/register', (req, res) => {
-    const { username, password, email, display_name } = req.body;
-
-    // Check if user already exists
-    db.get('SELECT username FROM users WHERE username = ?', [username], (err, user) => {
-        if (err) {
-            return res.render('register', {
-                error: "Database error occurred",
-                year: new Date().getFullYear()
-            });
-        }
-
-        if (user) {
-            return res.render('register', {
-                error: "Username already taken",
-                year: new Date().getFullYear()
-            });
-        }
-
-        // Insert new user
-        db.run(
-            'INSERT INTO users (username, pass, email, display_name, account_lock) VALUES (?, ?, ?, ?, ?)',
-            [username, password, email || username + '@example.com', display_name || username, 0],
-            function(err) {
-                if (err) {
-                    return res.render('register', {
-                        error: "Error creating account",
-                        year: new Date().getFullYear()
-                    });
-                }
-
-                // Log the registration
-                logLoginAttempt(username, req.ip, 0, () => {});
-
-                // Create session
-                createSession(username, (err, sessionId) => {
-                    if (err) {
-                        return res.redirect('/login');
-                    }
-
-                    res.cookie('sessionId', sessionId);
-                    res.redirect('/comments');
-                });
-            }
-        );
-    });
-});
-
-// Login page
-app.post('/login', (req, res) => {
-    const { username, password } = req.body;
-
-    db.get(
-        'SELECT username, pass, account_lock FROM users WHERE username = ?',
-        [username],
-        (err, user) => {
-            if (err || !user || user.pass !== password) {
-                // Log failed login attempt
-                if (username) {
-                    logLoginAttempt(username, req.ip, 1, () => {});
-                }
-
-                return res.render('login', {
-                    error: "Invalid username or password",
-                    year: new Date().getFullYear()
-                });
-            }
-
-            if (user.account_lock === 1) {
-                return res.render('login', {
-                    error: "Account is locked",
-                    year: new Date().getFullYear()
-                });
-            }
-
-            // Log successful login
-            logLoginAttempt(username, req.ip, 0, () => {});
-
-            // Create session
-            createSession(username, (err, sessionId) => {
-                if (err) {
-                    return res.render('login', {
-                        error: "Error creating session",
-                        year: new Date().getFullYear()
-                    });
-                }
-
-                res.cookie('sessionId', sessionId);
-                res.redirect('/comments');
-            });
-        }
-    );
 });
 
 // Post comments
