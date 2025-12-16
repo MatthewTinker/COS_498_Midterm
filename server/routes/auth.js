@@ -3,6 +3,7 @@
 //This script is absolutely vital: 
 //Keeps passwords secure and safe
 //Forces users to create stronger passwords
+//Locks accounts if the user fails to enter the correct password after multiple attempts (set to 5 by default, this is adjustable)
 
 const express = require('express');
 const router = express.Router();
@@ -46,17 +47,16 @@ function createSession(db, username, callback) {
     });
 }
 
-// Check if account should be locked based on recent failed attempts
+//Main function used to lock accounts
+//Checks the database to track how many attempts to login have been made
+//if the number == the max, locks account for 15 minutes
+
 function checkAccountLockout(db, username, callback) {
     const lockoutTimeMinutes = LOCKOUT_DURATION_MINUTES;
     const maxAttempts = MAX_LOGIN_ATTEMPTS;
 
-    console.log(`=== Checking lockout for: ${username} ===`);
-    console.log(`Max attempts: ${maxAttempts}, Lockout duration: ${lockoutTimeMinutes} mins`);
-    
-    // Get failed login attempts in the last lockout duration
     db.all(
-        `SELECT COUNT(*) as failCount, MAX(time_stamp) as lastAttempt 
+        `SELECT COUNT(*) as failCount, MIN(time_stamp) as firstAttempt, MAX(time_stamp) as lastAttempt 
          FROM login 
          WHERE username = ? 
          AND lock_status = 1 
@@ -64,25 +64,47 @@ function checkAccountLockout(db, username, callback) {
         [username],
         (err, rows) => {
             if (err) {
+                console.error('Database error in checkAccountLockout:', err);
                 return callback(err, null);
             }
             
+            console.log('Raw query results:', rows);
+            
             const failCount = rows[0].failCount;
+            const firstAttempt = rows[0].firstAttempt;  // Changed from lastAttempt
             const lastAttempt = rows[0].lastAttempt;
             
+            console.log(`Failed attempts in last ${lockoutTimeMinutes} mins: ${failCount}`);
+            console.log(`First attempt time: ${firstAttempt}`);
+            console.log(`Last attempt time: ${lastAttempt}`);
+            
             if (failCount >= maxAttempts) {
-                // Calculate remaining lockout time
-                const lastAttemptTime = new Date(lastAttempt);
-                const lockoutEndTime = new Date(lastAttemptTime.getTime() + (lockoutTimeMinutes * 60000));
+                // Use FIRST attempt time, not last
+                const firstAttemptTime = new Date(firstAttempt);
+                const lockoutEndTime = new Date(firstAttemptTime.getTime() + (lockoutTimeMinutes * 60000));
                 const now = new Date();
                 const remainingMinutes = Math.ceil((lockoutEndTime - now) / 60000);
                 
-                callback(null, {
-                    isLocked: true,
-                    remainingMinutes: remainingMinutes > 0 ? remainingMinutes : 0,
-                    failedAttempts: failCount
-                });
+                console.log('ACCOUNT IS LOCKED');
+                console.log(`Lockout ends at: ${lockoutEndTime}`);
+                console.log(`Remaining minutes: ${remainingMinutes}`);
+                
+                // If lockout has expired, return unlocked
+                if (remainingMinutes <= 0) {
+                    console.log('Lockout period has expired - unlocking account');
+                    callback(null, {
+                        isLocked: false,
+                        failedAttempts: 0
+                    });
+                } else {
+                    callback(null, {
+                        isLocked: true,
+                        remainingMinutes: remainingMinutes,
+                        failedAttempts: failCount
+                    });
+                }
             } else {
+                console.log('Account NOT locked yet');
                 callback(null, {
                     isLocked: false,
                     failedAttempts: failCount
@@ -241,8 +263,6 @@ module.exports = function(db) {
     // Login POST route with account lockout
     router.post('/login', async (req, res) => {
         const { username, password } = req.body;
-
-        console.log(`\n>>> Login attempt - Username: ${username}, IP: ${req.ip}`);
 
         // First check if account is locked due to failed attempts
         checkAccountLockout(db, username, (err, lockoutStatus) => {
