@@ -30,21 +30,88 @@
     -->
     {{#if comments.length}}
         <ul class="comment-list">
-            {{#each comments}}
-                <li class="comment">
-                    <strong style="color: {{this.name_color}}">
-                        {{this.display_name}}
-                    </strong>
-                    <em>({{formatDate this.createdAt}})</em>
-                    <p>{{this.text}}</p>
-                </li>
-            {{/each}}
+        {{#each comments}}
+            <li class="comment">
+                <strong style="color: {{this.name_color}}">
+                    {{this.display_name}}
+                </strong>
+                <em>({{formatDate this.createdAt}})</em>
+
+                <p
+                    class="comment-text"
+                    data-full="{{this.text}}"
+                >
+                    {{this.text}}
+                </p>
+
+                <button class="read-more-btn" style="display:none;">
+                    Read more
+                </button>
+            </li>
+        {{/each}}
+
         </ul>
     {{else}}
         <p>No comments yet. Be the first to post!</p>
     {{/if}}
 
+    {{#if totalComments}}
+        <div class="pagination">
+            <p>
+                Page {{page}} of {{totalPages}} —
+                {{totalComments}} total comments
+            </p>
+
+            <div class="pagination-links">
+                {{#if (gt page 1)}}
+                    <a href="/comments?page={{subtract page 1}}">Previous</a>
+                {{/if}}
+
+                {{#each (range 1 totalPages)}}
+                    {{#if (eq this ../page)}}
+                        <strong>{{this}}</strong>
+                    {{else}}
+                        <a href="/comments?page={{this}}">{{this}}</a>
+                    {{/if}}
+                {{/each}}
+
+                {{#if (lt page totalPages)}}
+                    <a href="/comments?page={{add page 1}}">Next</a>
+                {{/if}}
+            </div>
+    </div>
+    {{/if}}
+
+
     {{> footer}}
+
+    
+    <script>
+        const MAX_LENGTH = 300;
+
+        document.querySelectorAll('.comment').forEach(comment => {
+            const textEl = comment.querySelector('.comment-text');
+            const btn = comment.querySelector('.read-more-btn');
+
+            const fullText = textEl.dataset.full;
+
+            if (fullText.length <= MAX_LENGTH) return;
+
+            const shortText = fullText.slice(0, MAX_LENGTH) + '…';
+
+            textEl.textContent = shortText;
+            btn.style.display = 'inline';
+
+            let expanded = false;
+
+            btn.addEventListener('click', () => {
+                expanded = !expanded;
+                textEl.textContent = expanded ? fullText : shortText;
+                btn.textContent = expanded ? 'Show less' : 'Read more';
+            });
+        });
+    </script>
+
 </body>
 
 

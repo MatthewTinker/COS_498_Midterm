@@ -1,9 +1,139 @@
-const express = require('express');
-const router = express.Router();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{title}}</title>
 
-router.get('/chat', (req, res) => {
-    if (!req.user) return res.redirect('/login');
-    res.render('chat', { title: 'Chat', user: req.user });
-});
+    <link rel="stylesheet" href="/css/main.css">
 
-module.exports = router;
+    <style>
+        #chat-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        #messages {
+            border: 1px solid #ccc;
+            height: 400px;
+            padding: 10px;
+            overflow-y: auto;
+            background: #fafafa;
+        }
+
+        .chat-message {
+            margin-bottom: 6px;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+
+        .chat-name {
+            font-weight: bold;
+        }
+
+        .chat-time {
+            color: #666;
+            font-size: 0.85em;
+            margin-left: 4px;
+        }
+
+        #chat-form {
+            display: flex;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        #chat-input {
+            flex: 1;
+            padding: 8px;
+            font-size: 1em;
+        }
+
+        #chat-form button {
+            padding: 8px 14px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+{{> nav}}
+
+<div id="chat-container">
+    <h1>Live Chat</h1>
+
+    <div id="messages"></div>
+
+    <form id="chat-form" autocomplete="off">
+        <input
+            id="chat-input"
+            placeholder="Type a message..."
+            maxlength="500"
+            required
+        />
+        <button type="submit">Send</button>
+    </form>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io();
+
+    const messages = document.getElementById('messages');
+    const form = document.getElementById('chat-form');
+    const input = document.getElementById('chat-input');
+
+    function formatTime(value) {
+        const date = new Date(value);
+        if (isNaN(date.getTime())) return '';
+        return date.toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    function addMessage(msg) {
+        const div = document.createElement('div');
+        div.className = 'chat-message';
+
+        const time = formatTime(msg.timestamps);
+
+        div.innerHTML = `
+            <span class="chat-name" style="color:${msg.name_color || '#000'}">
+                ${msg.display_name}
+            </span>
+            <span class="chat-time">[${time}]</span>:
+            <span class="chat-text">${msg.message}</span>
+        `;
+
+        messages.appendChild(div);
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+    // Load chat history
+    fetch('/api/chat')
+        .then(res => res.json())
+        .then(data => {
+            data.forEach(addMessage);
+        })
+        .catch(err => {
+            console.error('Failed to load chat history:', err);
+        });
+
+    // Send message
+    form.addEventListener('submit', e => {
+        e.preventDefault();
+        const text = input.value.trim();
+        if (!text) return;
+
+        socket.emit('chatMessage', text);
+        input.value = '';
+    });
+
+    // Receive live messages
+    socket.on('chatMessage', addMessage);
+</script>
+
+{{> footer}}
+</body>
+</html>

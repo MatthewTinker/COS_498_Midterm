@@ -21,6 +21,8 @@ hbs.registerPartials(path.join(__dirname, 'views', 'partials'));
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static('public'))
+
 
 // Helper for registration
 hbs.registerHelper('formatDate', function(date) {
@@ -37,6 +39,18 @@ hbs.registerHelper('formatDate', function(date) {
 hbs.registerHelper('eq', function(a, b) {
     return a === b;
 });
+
+hbs.registerHelper('add', (a, b) => a + b);
+hbs.registerHelper('subtract', (a, b) => a - b);
+hbs.registerHelper('gt', (a, b) => a > b);
+hbs.registerHelper('lt', (a, b) => a < b);
+
+hbs.registerHelper('range', (start, end) => {
+    const arr = [];
+    for (let i = start; i <= end; i++) arr.push(i);
+    return arr;
+});
+
 
 // Session middleware
 app.use((req, res, next) => {
@@ -58,22 +72,17 @@ app.use((req, res, next) => {
     }
 });
 
+
 io.use((socket, next) => {
     const cookieHeader = socket.handshake.headers.cookie;
-    if (!cookieHeader) {
-        socket.username = null;
-        return next();
-    }
+    if (!cookieHeader) return next();
 
     const cookies = Object.fromEntries(
-        cookieHeader.split('; ').map(c => c.split('='))
+        cookieHeader.split('; ').map(c => c.trim().split('='))
     );
 
     const sessionId = cookies.sessionId;
-    if (!sessionId) {
-        socket.username = null;
-        return next();
-    }
+    if (!sessionId) return next();
 
     db.get(
         'SELECT username FROM sessions WHERE session_id = ?',
@@ -81,35 +90,45 @@ io.use((socket, next) => {
         (err, session) => {
             if (!err && session) {
                 socket.username = session.username;
-            } else {
-                socket.username = null;
             }
             next();
         }
     );
 });
 
-io.on('connection', (socket) => {
-    socket.on('chatMessage', (message) => {
-        if (!socket.username) return; // ignore unauthenticated
 
+io.on('connection', socket => {
+    socket.on('chatMessage', message => {
+        if (!socket.username) return;
         if (!message || !message.trim()) return;
 
         db.get(
-            'SELECT display_name FROM users WHERE username = ?',
+            `SELECT display_name, name_color
+             FROM users
+             WHERE username = ?`,
             [socket.username],
             (err, user) => {
                 if (err || !user) return;
 
+                const timestamp = new Date().toISOString();
+
                 db.run(
-                    `INSERT INTO chat_messages (username, display_name, message)
-                     VALUES (?, ?, ?)`,
-                    [socket.username, user.display_name, message],
-                    function () {
+                    `INSERT INTO chat_messages
+                     (username, display_name, name_color, message, timestamps)
+                     VALUES (?, ?, ?, ?, ?)`,
+                    [
+                        socket.username,
+                        user.display_name,
+                        user.name_color || '#000000',
+                        message,
+                        timestamp
+                    ],
+                    () => {
                         io.emit('chatMessage', {
                             display_name: user.display_name,
+                            name_color: user.name_color || '#000000',
                             message,
-                            created_at: new Date().toISOString()
+                            timestamps: timestamp
                         });
                     }
                 );
@@ -155,9 +174,8 @@ app.use('/', accountRoutes(db));
 
 // Import and use chat routes
 const chatRoutes = require('./routes/chat');
-app.use('/', chatRoutes());
+app.use('/', chatRoutes(db));
 
-app.use(express.static('public'))
 
 //App Get requests, almost all follow the same format
 app.get('/', (req, res) => {
@@ -176,55 +194,92 @@ app.get('/login', (req, res) => {
     res.render('login', { title: "Home", user: req.user || null, year: new Date().getFullYear() });
 });
 
-app.get('/chat', (req, res) => {
-    if (!req.user) return res.redirect('/login');
-    res.render('chat', { title: 'Chat', user: req.user });
-});
 
 
 
-
-//Render comments
 app.get('/comments', (req, res) => {
-    db.all(
-        `
-        SELECT 
-            c.body,
-            c.timestamps,
-            u.display_name,
-            u.name_color
-        FROM comments c
-        JOIN users u ON c.author = u.username
-        ORDER BY c.timestamps DESC
-        `,
+    const COMMENTS_PER_PAGE = 20;
+
+    // Parse page number safely
+    let page = parseInt(req.query.page, 10);
+    if (isNaN(page) || page < 1) page = 1;
+
+    const offset = (page - 1) * COMMENTS_PER_PAGE;
+
+    // Get total comment count
+    db.get(
+        'SELECT COUNT(*) AS count FROM comments',
         [],
-        (err, rows) => {
+        (err, countRow) => {
             if (err) {
-                console.error('Error fetching comments:', err);
+                console.error('Count error:', err);
                 return res.render('comments', {
                     title: "Comments",
                     user: req.user || null,
-                    year: new Date().getFullYear(),
-                    comments: []
+                    comments: [],
+                    page: 1,
+                    totalPages: 1,
+                    totalComments: 0
                 });
             }
 
-            const formattedComments = rows.map(c => ({
-                display_name: c.display_name,
-                name_color: c.name_color || '#000000',
-                text: c.body,
-                createdAt: c.timestamps
-            }));
+            const totalComments = countRow.count;
+            const totalPages = Math.max(
+                1,
+                Math.ceil(totalComments / COMMENTS_PER_PAGE)
+            );
 
-            res.render('comments', {
-                title: "Comments",
-                user: req.user || null,
-                year: new Date().getFullYear(),
-                comments: formattedComments
-            });
+            // Clamp page if too large
+            if (page > totalPages) page = totalPages;
+
+            // Fetch paginated comments
+            db.all(
+                `
+                SELECT 
+                    c.body,
+                    c.timestamps,
+                    u.display_name,
+                    u.name_color
+                FROM comments c
+                JOIN users u ON c.author = u.username
+                ORDER BY c.timestamps DESC
+                LIMIT ? OFFSET ?
+                `,
+                [COMMENTS_PER_PAGE, offset],
+                (err, rows) => {
+                    if (err) {
+                        console.error('Comments fetch error:', err);
+                        return res.render('comments', {
+                            title: "Comments",
+                            user: req.user || null,
+                            comments: [],
+                            page,
+                            totalPages,
+                            totalComments
+                        });
+                    }
+
+                    const comments = rows.map(c => ({
+                        display_name: c.display_name,
+                        name_color: c.name_color || '#000000',
+                        text: c.body,
+                        createdAt: c.timestamps
+                    }));
+
+                    res.render('comments', {
+                        title: "Comments",
+                        user: req.user || null,
+                        comments,
+                        page,
+                        totalPages,
+                        totalComments
+                    });
+                }
+            );
         }
     );
 });
+
 
 app.get('/comments/new', (req, res) => {
     res.render('new', { title: "Home", user: req.user || null, year: new Date().getFullYear() });
