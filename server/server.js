@@ -68,7 +68,6 @@ app.use('/', accountRoutes(db));
 
 
 
-
 //App Get requests, almost all follow the same format
 app.get('/', (req, res) => {
     res.render('home', { title: "Home", user: req.user || null, year: new Date().getFullYear() });

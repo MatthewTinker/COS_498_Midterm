@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+    {{> nav}}
+    
+    <main>
+        <h1>Profile Settings</h1>
+
+        {{#if user}}
+            {{#if error}}
+                <div class="error-message">
+                    <p>{{error}}</p>
+                </div>
+            {{/if}}
+
+            {{#if success}}
+                <div class="success-message">
+                    <p>{{success}}</p>
+                </div>
+            {{/if}}
+
+            <form method="POST" action="/profile">
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" value="{{userProfile.email}}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="display_name">Display Name:</label>
+                    <input type="text" id="display_name" name="display_name" value="{{userProfile.display_name}}" required>
+                </div>
+
+                <button type="submit">Update Profile</button>
+            </form>
+        {{else}}
+            <p>You must be logged in to view this page.</p>
+        {{/if}}
+    </main>
+
+    {{> footer}}
+</body>
+</html>

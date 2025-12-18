@@ -5,18 +5,17 @@ Being either new comment and logout, or login and register.
 <header>
     <nav>
         <ul>
-            <li><a href="/home"> Home </a></li>
-            <li><a href="/comments"> Forum </a></li>
+            <li><a href="/home">Home</a></li>
+            <li><a href="/comments">Forum</a></li>
 
             {{#if user}}
-                <li><a href="/comments/new"> Make a Post </a></li>
-                <li><a href="/profile">Profile</a></li>
+                <li><a href="/comments/new">Make a Post</a></li>
+                <li><a href="/profile">{{user}}</a></li>
                 <li><a href="/logout">Logout</a></li>
             {{else}}
-                <li><a href="/login"> Login </a></li>
-                <li><a href="/register"> Register</a></li>
+                <li><a href="/login">Login</a></li>
+                <li><a href="/register">Register</a></li>
             {{/if}}
-
         </ul>
     </nav>
 </header>

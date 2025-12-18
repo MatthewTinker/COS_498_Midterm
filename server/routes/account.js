@@ -1,7 +1,8 @@
 const express = require('express');
-const router = express.Router();
 
-module.exports = function(db) {
+module.exports = function (db) {
+    const router = express.Router();
+
     // GET profile/settings page
     router.get('/profile', (req, res) => {
         if (!req.user) {
@@ -13,11 +14,12 @@ module.exports = function(db) {
             [req.user],
             (err, user) => {
                 if (err || !user) {
+                    console.error('Profile lookup failed:', err);
                     return res.redirect('/');
                 }
 
                 res.render('profile', {
-                    title: "Profile",
+                    title: 'Profile',
                     user: req.user,
                     userProfile: user,
                     year: new Date().getFullYear()
@@ -33,60 +35,39 @@ module.exports = function(db) {
         }
 
         const { email, display_name } = req.body;
-
-        // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        // Invalid email
         if (!emailRegex.test(email)) {
-            return db.get(
-                'SELECT * FROM users WHERE username = ?',
-                [req.user],
-                (err, user) => {
-                    res.render('profile', {
-                        title: "Profile",
-                        user: req.user,
-                        userProfile: user,
-                        error: "Please enter a valid email address",
-                        year: new Date().getFullYear()
-                    });
-                }
+            return renderProfileWithError(
+                res,
+                db,
+                req.user,
+                'Please enter a valid email address'
             );
         }
 
-        // Validate display name is different from username
+        // Display name same as username
         if (display_name.toLowerCase() === req.user.toLowerCase()) {
-            return db.get(
-                'SELECT * FROM users WHERE username = ?',
-                [req.user],
-                (err, user) => {
-                    res.render('profile', {
-                        title: "Profile",
-                        user: req.user,
-                        userProfile: user,
-                        error: "Display name must be different from username",
-                        year: new Date().getFullYear()
-                    });
-                }
+            return renderProfileWithError(
+                res,
+                db,
+                req.user,
+                'Display name must be different from username'
             );
         }
 
-        // Check if email is already taken
+        // Check if email is taken
         db.get(
             'SELECT username FROM users WHERE email = ? AND username != ?',
             [email, req.user],
             (err, existingUser) => {
                 if (existingUser) {
-                    return db.get(
-                        'SELECT * FROM users WHERE username = ?',
-                        [req.user],
-                        (err, user) => {
-                            res.render('profile', {
-                                title: "Profile",
-                                user: req.user,
-                                userProfile: user,
-                                error: "Email already in use by another account",
-                                year: new Date().getFullYear()
-                            });
-                        }
+                    return renderProfileWithError(
+                        res,
+                        db,
+                        req.user,
+                        'Email already in use by another account'
                     );
                 }
 
@@ -97,31 +78,24 @@ module.exports = function(db) {
                     (err) => {
                         if (err) {
                             console.error('Error updating profile:', err);
-                            return db.get(
-                                'SELECT * FROM users WHERE username = ?',
-                                [req.user],
-                                (err, user) => {
-                                    res.render('profile', {
-                                        title: "Profile",
-                                        user: req.user,
-                                        userProfile: user,
-                                        error: "Error updating profile",
-                                        year: new Date().getFullYear()
-                                    });
-                                }
+                            return renderProfileWithError(
+                                res,
+                                db,
+                                req.user,
+                                'Error updating profile'
                             );
                         }
 
-                        // Success
+                        // Success - fetch updated user data
                         db.get(
-                            'SELECT * FROM users WHERE username = ?',
+                            'SELECT username, email, display_name FROM users WHERE username = ?',
                             [req.user],
                             (err, user) => {
                                 res.render('profile', {
-                                    title: "Profile",
+                                    title: 'Profile',
                                     user: req.user,
                                     userProfile: user,
-                                    success: "Profile updated successfully!",
+                                    success: 'Profile updated successfully!',
                                     year: new Date().getFullYear()
                                 });
                             }
@@ -134,3 +108,22 @@ module.exports = function(db) {
 
     return router;
 };
+
+/**
+ * Helper to re-render profile with an error message
+ */
+function renderProfileWithError(res, db, username, error) {
+    db.get(
+        'SELECT username, email, display_name FROM users WHERE username = ?',
+        [username],
+        (err, user) => {
+            res.render('profile', {
+                title: 'Profile',
+                user: username,
+                userProfile: user,
+                error,
+                year: new Date().getFullYear()
+            });
+        }
+    );
+}
