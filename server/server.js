@@ -20,7 +20,6 @@ hbs.registerPartials(path.join(__dirname, 'views', 'partials'));
 // Middleware
 app.use(cookieParser());
 app.use(express.json());
-app.use(express.static('public'))
 app.use(express.urlencoded({ extended: true }));
 
 // Helper for registration
@@ -156,9 +155,9 @@ app.use('/', accountRoutes(db));
 
 // Import and use chat routes
 const chatRoutes = require('./routes/chat');
-app.use('/', chatRoutes(io, db));
+app.use('/', chatRoutes());
 
-
+app.use(express.static('public'))
 
 //App Get requests, almost all follow the same format
 app.get('/', (req, res) => {
