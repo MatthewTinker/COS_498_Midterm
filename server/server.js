@@ -4,7 +4,8 @@ const hbs = require('hbs');
 const cookieParser = require('cookie-parser')
 const path = require('path');
 const PORT = process.env.PORT || 3000;
-const db = require("./scripts/database.js");
+const db = require('./scripts/database.js');
+//const db = require("./scripts/database.js");
 
 
 // Set up Handlebars
@@ -53,6 +54,11 @@ app.use((req, res, next) => {
 // Import and use auth routes
 const authRoutes = require('./routes/auth');
 app.use('/', authRoutes(db));
+
+//Import and use account routes
+const accountRoutes = require('./routes/account');
+app.use('/', accountRoutes(db));
+
 
 //App Get requests, almost all follow the same format
 app.get('/', (req, res) => {
