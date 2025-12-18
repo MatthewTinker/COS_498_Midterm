@@ -51,6 +51,13 @@ app.use((req, res, next) => {
     }
 });
 
+//Passes the user into all pages
+app.use((req, res, next) => {
+    res.locals.user = req.user || null;
+    next();
+});
+
+
 // Import and use auth routes
 const authRoutes = require('./routes/auth');
 app.use('/', authRoutes(db));
@@ -58,6 +65,8 @@ app.use('/', authRoutes(db));
 //Import and use account routes
 const accountRoutes = require('./routes/account');
 app.use('/', accountRoutes(db));
+
+
 
 
 //App Get requests, almost all follow the same format
@@ -76,6 +85,8 @@ app.get('/register', (req, res) => {
 app.get('/login', (req, res) => {
     res.render('login', { title: "Home", user: req.user || null, year: new Date().getFullYear() });
 });
+
+
 
 //Render comments
 //Note, things are special
@@ -146,14 +157,14 @@ app.post('/comments', (req, res) => {
     );
 });
 
-// Graceful shutdown
+
+
+// Graceful shutdown, throws warning if there is an error
 process.on('SIGINT', () => {
     db.close((err) => {
         if (err) {
             console.error('Error closing database:', err);
-        } else {
-            console.log('Database connection closed');
-        }
+        } 
         process.exit(0);
     });
 });
