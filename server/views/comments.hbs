@@ -32,7 +32,10 @@
         <ul class="comment-list">
             {{#each comments}}
                 <li class="comment">
-                    <strong>{{this.author}}</strong> <em>({{formatDate this.createdAt}})</em>
+                    <strong style="color: {{this.name_color}}">
+                        {{this.display_name}}
+                    </strong>
+                    <em>({{formatDate this.createdAt}})</em>
                     <p>{{this.text}}</p>
                 </li>
             {{/each}}

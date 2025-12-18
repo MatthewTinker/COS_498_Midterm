@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Profile Settings</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/main.css">
+</head>
+
+<body>
+    {{> nav}}
+
+    <main>
+        <h1>Profile Settings</h1>
+
+        {{#if user}}
+
+            {{#if error}}
+                <div class="error-message">{{error}}</div>
+            {{/if}}
+
+            {{#if success}}
+                <div class="success-message">{{success}}</div>
+            {{/if}}
+
+            <p>
+                Preview:
+                <span id="namePreview" style="color: {{userProfile.name_color}}">
+                    {{userProfile.display_name}}
+                </span>
+            </p>
+
+            <!-- ================= PROFILE UPDATE ================= -->
+            <h2>Update Profile</h2>
+
+            <form method="POST" action="/profile/update">
+
+                <label>Email</label>
+                <input type="email" name="email" value="{{userProfile.email}}" required>
+
+                <label>Display Name</label>
+                <input type="text" name="display_name" value="{{userProfile.display_name}}" required>
+
+                <label>Name Color</label>
+                <select id="name_color" name="name_color" required>
+                    <option value="hsla(226, 71%, 40%, 1.00)">Navy</option>
+                    <option value="#dc2626">Red</option>
+                    <option value="#16a34a">Green</option>
+                    <option value="#9333ea">Purple</option>
+                    <option value="#ea580c">Orange</option>
+                    <option value="#0891b2">Cyan</option>
+                    <option value="#ca8a04">Gold</option>
+                    <option value="#e11d48">Rose</option>
+                    <option value="#4f46e5">Indigo</option>
+                    <option value="#059669">Teal</option>
+                    <option value="#d97706">Amber</option>
+                    <option value="#7c3aed">Violet</option>
+                </select>
+
+                <label>Current Password <span class="required">*</span></label>
+                <input type="password" name="current_password" required>
+
+                <button type="submit">Update Profile</button>
+            </form>
+
+            <hr>
+
+            <!-- ================= PASSWORD CHANGE ================= -->
+            <h2>Change Password</h2>
+
+            <div class="password-rules">
+                <strong>Password Requirements:</strong>
+                <ul>
+                    <li>At least 8 characters long</li>
+                    <li>At least one uppercase letter</li>
+                    <li>At least one lowercase letter</li>
+                    <li>At least one number</li>
+                    <li>At least one special character</li>
+                </ul>
+            </div>
+
+            <form method="POST" action="/profile/change-password">
+
+                <label>Current Password</label>
+                <input type="password" name="current_password" required>
+
+                <label>New Password</label>
+                <input type="password" name="new_password" required>
+
+                <label>Confirm New Password</label>
+                <input type="password" name="confirm_password" required>
+
+                <button type="submit">Change Password</button>
+            </form>
+
+            <script>
+                const select = document.getElementById('name_color');
+                const preview = document.getElementById('namePreview');
+
+                select.value = "{{userProfile.name_color}}";
+
+                select.addEventListener('change', () => {
+                    preview.style.color = select.value;
+                });
+            </script>
+
+        {{else}}
+            <p>You must be logged in to view this page.</p>
+        {{/if}}
+    </main>
+
+    {{> footer}}
+</body>
+</html>

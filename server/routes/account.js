@@ -1,105 +1,128 @@
 const express = require('express');
+const {
+    validatePassword,
+    hashPassword,
+    comparePassword
+} = require('../modules/password-utils');
 
 module.exports = function (db) {
     const router = express.Router();
 
-    // GET profile/settings page
+    const ALLOWED_COLORS = [
+        'hsla(226, 71%, 40%, 1.00)',
+        '#dc2626', '#16a34a', '#9333ea',
+        '#ea580c', '#0891b2', '#ca8a04',
+        '#e11d48', '#4f46e5', '#059669',
+        '#d97706', '#7c3aed'
+    ];
+
+    /* ===================== GET PROFILE ===================== */
     router.get('/profile', (req, res) => {
-        if (!req.user) {
-            return res.redirect('/login');
+        if (!req.user) return res.redirect('/login');
+
+        render(res, db, req.user);
+    });
+
+    /* ===================== UPDATE PROFILE ===================== */
+    router.post('/profile/update', async (req, res) => {
+        if (!req.user) return res.redirect('/login');
+
+        const { email, display_name, name_color, current_password } = req.body;
+
+        if (!current_password) {
+            return render(res, db, req.user, 'Current password is required');
         }
 
+        if (!display_name || display_name.trim().length === 0) {
+            return render(res, db, req.user, 'Display name cannot be empty');
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return render(res, db, req.user, 'Invalid email address');
+        }
+
+        const cleanColor = ALLOWED_COLORS.includes(name_color)
+            ? name_color
+            : ALLOWED_COLORS[0];
+
         db.get(
-            'SELECT username, email, display_name FROM users WHERE username = ?',
+            'SELECT pass FROM users WHERE username = ?',
             [req.user],
-            (err, user) => {
+            async (err, user) => {
                 if (err || !user) {
-                    console.error('Profile lookup failed:', err);
-                    return res.redirect('/');
+                    return render(res, db, req.user, 'Authentication error');
                 }
 
-                res.render('profile', {
-                    title: 'Profile',
-                    user: req.user,
-                    userProfile: user,
-                    year: new Date().getFullYear()
-                });
+                const valid = await comparePassword(current_password, user.pass);
+                if (!valid) {
+                    return render(res, db, req.user, 'Current password is incorrect');
+                }
+
+                db.run(
+                    `UPDATE users
+                     SET email = ?, display_name = ?, name_color = ?
+                     WHERE username = ?`,
+                    [email, display_name.trim(), cleanColor, req.user],
+                    err => {
+                        if (err) {
+                            console.error(err);
+                            return render(res, db, req.user, 'Failed to update profile');
+                        }
+
+                        render(res, db, req.user, null, 'Profile updated successfully');
+                    }
+                );
             }
         );
     });
 
-    // POST update profile
-    router.post('/profile', (req, res) => {
-        if (!req.user) {
-            return res.redirect('/login');
+    /* ===================== CHANGE PASSWORD ===================== */
+    router.post('/profile/change-password', async (req, res) => {
+        if (!req.user) return res.redirect('/login');
+
+        const { current_password, new_password, confirm_password } = req.body;
+
+        if (!current_password || !new_password || !confirm_password) {
+            return render(res, db, req.user, 'All password fields are required');
         }
 
-        const { email, display_name } = req.body;
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-        // Invalid email
-        if (!emailRegex.test(email)) {
-            return renderProfileWithError(
-                res,
-                db,
-                req.user,
-                'Please enter a valid email address'
-            );
+        if (new_password !== confirm_password) {
+            return render(res, db, req.user, 'Passwords do not match');
         }
 
-        // Display name same as username
-        if (display_name.toLowerCase() === req.user.toLowerCase()) {
-            return renderProfileWithError(
-                res,
-                db,
-                req.user,
-                'Display name must be different from username'
-            );
+        const validation = validatePassword(new_password);
+        if (!validation.valid) {
+            return render(res, db, req.user, validation.errors.join('. '));
         }
 
-        // Check if email is taken
         db.get(
-            'SELECT username FROM users WHERE email = ? AND username != ?',
-            [email, req.user],
-            (err, existingUser) => {
-                if (existingUser) {
-                    return renderProfileWithError(
-                        res,
-                        db,
-                        req.user,
-                        'Email already in use by another account'
-                    );
+            'SELECT pass FROM users WHERE username = ?',
+            [req.user],
+            async (err, user) => {
+                if (err || !user) {
+                    return render(res, db, req.user, 'Authentication error');
                 }
 
-                // Update profile
+                const valid = await comparePassword(current_password, user.pass);
+                if (!valid) {
+                    return render(res, db, req.user, 'Current password is incorrect');
+                }
+
+                const hashed = await hashPassword(new_password);
+
                 db.run(
-                    'UPDATE users SET email = ?, display_name = ? WHERE username = ?',
-                    [email, display_name, req.user],
-                    (err) => {
+                    'UPDATE users SET pass = ? WHERE username = ?',
+                    [hashed, req.user],
+                    err => {
                         if (err) {
-                            console.error('Error updating profile:', err);
-                            return renderProfileWithError(
-                                res,
-                                db,
-                                req.user,
-                                'Error updating profile'
-                            );
+                            console.error(err);
+                            return render(res, db, req.user, 'Failed to update password');
                         }
 
-                        // Success - fetch updated user data
-                        db.get(
-                            'SELECT username, email, display_name FROM users WHERE username = ?',
-                            [req.user],
-                            (err, user) => {
-                                res.render('profile', {
-                                    title: 'Profile',
-                                    user: req.user,
-                                    userProfile: user,
-                                    success: 'Profile updated successfully!',
-                                    year: new Date().getFullYear()
-                                });
-                            }
-                        );
+                        db.run('DELETE FROM sessions WHERE username = ?', [req.user]);
+                        res.clearCookie('sessionId');
+                        res.redirect('/login?message=Password changed successfully');
                     }
                 );
             }
@@ -109,19 +132,23 @@ module.exports = function (db) {
     return router;
 };
 
-/**
- * Helper to re-render profile with an error message
- */
-function renderProfileWithError(res, db, username, error) {
+/* ===================== RENDER HELPER ===================== */
+function render(res, db, username, error = null, success = null) {
     db.get(
-        'SELECT username, email, display_name FROM users WHERE username = ?',
+        `SELECT username, email, display_name, name_color
+         FROM users WHERE username = ?`,
         [username],
         (err, user) => {
-            res.render('profile', {
-                title: 'Profile',
+            if (err || !user) {
+                return res.redirect('/');
+            }
+
+            res.render('account', {
+                title: 'Profile Settings',
                 user: username,
                 userProfile: user,
                 error,
+                success,
                 year: new Date().getFullYear()
             });
         }
