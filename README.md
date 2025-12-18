@@ -10,18 +10,24 @@ This is a website source code designed to be used as a simple forum for discussi
 
 
 ## Features
-### Database Schema
-Explanation
 
-### Environment Variables
-Explanation
+### Forum
+There is a basic forum. This consists of username, time, and the body content. 20 comments are viewable per page, and there is a read more functionality for comments larger than a certain threshold.
 
 ### Security Features
 - Secured using SSL certificates from let's encrypt
+
 - Passwords secured using argon2, as well as having to meet a set of adjustable criteria. if passwords fail to meet this criteria, they will be given an error when creating their account.
+
 - Accounts will become locked out if the user fails to enter the correct password after 5 attempts. Lockout time is 15 minutes.
 
-### Database
+### Account Customization
+Users can choose from a list of 12 colors for their name, change their display name, and change their password. They MUST use their old password to change anything, however.
+
+### Real-time Chat with websocket io
+Users can chat in real time! Timestamps as well as the users profile color are included.
+
+### Database Schema
 - CREATE TABLE users (
         username TEXT UNIQUE NOT NULL PRIMARY KEY,
         pass TEXT NOT NULL,
@@ -29,6 +35,7 @@ Explanation
         display_name TEXT NOT NULL,
         profile_customization TEXT,
         account_lock INTEGER NOT NULL
+        name_color TEXT 
     )
 - CREATE TABLE login (
         login_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,6 +52,15 @@ Explanation
         timestamps DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (author) REFERENCES users(username)
     )
+-CREATE TABLE chat_messages (
+    message_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL,
+    display_name TEXT NOT NULL,
+    name_color TEXT NOT NULL,
+    message TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (username) REFERENCES users(username)
+)
 - CREATE TABLE sessions (
         session_id INTEGER NOT NULL PRIMARY KEY,
         username TEXT NOT NULL,
@@ -52,15 +68,6 @@ Explanation
         FOREIGN KEY (username) REFERENCES users(username)
     )
 
-
-### IN PROGRESS
-- Account system, with customization
-
-### TO DO
-- Comment Pagination
-- Real-time chat
-- Additional Feature (upvote/downvote system?)
-- Password recovery
 
 
 ## Instructions
